@@ -4,7 +4,6 @@ require 'json'
 
 module Jekyll
     module Figma
-
         TOKEN = 'xxxx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
         BASE_URL = 'https://api.figma.com/v1/images/'
 
@@ -28,8 +27,15 @@ module Jekyll
                 http.use_ssl = true
                 response = http.get(api_url, 'X-Figma-Token' => TOKEN)
 
-                json = JSON.parse(response.body)
-                image = json["images"][@frame]
+                figma = JSON.parse(response.body)
+
+                begin
+                    image = figma["images"][@frame]
+                rescue
+                    if figma["err"]
+                        raise "Figma API error #{figma['status']}: #{figma['err']}."
+                    end
+                end
 
                 "<img src=\"#{image}\" />"
             end
