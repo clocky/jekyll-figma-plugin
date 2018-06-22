@@ -11,6 +11,6 @@ In your posts, add `{% figma <figma_url> %}` where `figma_url` is a link to a fr
 
 ## Notes and caveats
 
-* There's no error checking whatsoever.
+* There's minimal error checking, checking for a status code from the Figma API and very little else.
 * Figma recently updated the API to note that [images expire after 30 days](https://www.figma.com/developers/docs#images-endpoint).
 
