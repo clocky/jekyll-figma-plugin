@@ -18,26 +18,39 @@ module Jekyll
                 # Identify document and frame from the source URL
                 @document = @url.path.split("/")[2]
                 @frame = URI.unescape(@url.query).split("=")[1]
+    
+                # Retrieve 1x and 2x scale images
+                @srcset = Array.new
 
-                # Generate a Figma API request URL
-                api_url = URI.parse("#{BASE_URL}#{@document}?ids=#{@frame}")
+                for scale in 1..2 do
+                    # Generate a Figma API request URL
+                    api_url = URI.parse("#{BASE_URL}#{@document}?ids=#{@frame}&scale=#{scale}")
+                    @srcset.push(request(api_url))
+                end
                 
-                # Make the request
-                http = Net::HTTP.new(api_url.host, api_url.port)
-                http.use_ssl = true
-                response = http.get(api_url, 'X-Figma-Token' => TOKEN)
+                "<img srcset=\"#{@srcset[0]} 1x, #{@srcset[1 ]} 2x\" class=\"figma\"/>"
+            end
 
+            def request(url)
+                # Compose the request parameters
+                http = Net::HTTP.new(url.host, url.port)
+                http.use_ssl = true
+                puts "\tFigma: Requesting frame #{@frame} from document id #{@document}...\n"
+
+                # Make the request 
+                response = http.get(url, 'X-Figma-Token' => TOKEN)
                 figma = JSON.parse(response.body)
 
+                # Simplistic error checking on the response content
                 begin
                     image = figma["images"][@frame]
                 rescue
-                    if figma["err"]
+                    if figma["status"]
                         raise "Figma API error #{figma['status']}: #{figma['err']}."
                     end
                 end
-
-                "<img src=\"#{image}\" />"
+                
+                return image
             end
         end
     end
